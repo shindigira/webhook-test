@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 import express from "express";
-import serverless from "serverless-http";
 
 dotenv.config();
 
@@ -24,21 +23,16 @@ const receive = (req, res) => {
 	res.sendStatus(200);
 };
 
-// Register BOTH paths regardless of env
+// Register routes
 app.get("/api/webhook", verify);
 app.post("/api/webhook", receive);
 app.get("/", verify);
 app.post("/", receive);
 app.get("/api/health", (_req, res) => res.status(200).send("ok"));
 
-// Export serverless handler for Vercel
-export default serverless(app);
-
-// Optional local server
-if (!process.env.VERCEL) {
-	const PORT = process.env.PORT || 3000;
-	app.listen(PORT, () => {
-		console.log(`Server running on http://localhost:${PORT}`);
-		console.log(`Webhook endpoint: http://localhost:${PORT}/api/webhook`);
-	});
-}
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+	console.log(`Server running on http://localhost:${PORT}`);
+	console.log(`Webhook endpoint: http://localhost:${PORT}/api/webhook`);
+});
