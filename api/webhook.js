@@ -29,6 +29,7 @@ app.get("/api/webhook", verify);
 app.post("/api/webhook", receive);
 app.get("/", verify);
 app.post("/", receive);
+app.get("/api/health", (_req, res) => res.status(200).send("ok"));
 
 // Export serverless handler for Vercel
 export default serverless(app);
