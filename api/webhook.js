@@ -9,27 +9,31 @@ app.use(express.json());
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "dev-token";
 
-app.get("/api/webhook", (req, res) => {
+const verify = (req, res) => {
 	const mode = req.query["hub.mode"];
 	const token = req.query["hub.verify_token"];
 	const challenge = req.query["hub.challenge"];
-
-	if (mode === "subscribe" && token === VERIFY_TOKEN) {
+	if (mode === "subscribe" && token === VERIFY_TOKEN && challenge) {
 		return res.status(200).send(challenge);
 	}
-	res.sendStatus(403);
-});
+	return res.sendStatus(403);
+};
 
-app.post("/api/webhook", (req, res) => {
+const receive = (req, res) => {
 	console.log("Webhook event:", JSON.stringify(req.body, null, 2));
 	res.sendStatus(200);
-});
+};
 
-// 👇 Export the handler for serverless (Vercel)
+// Register BOTH paths regardless of env
+app.get("/api/webhook", verify);
+app.post("/api/webhook", receive);
+app.get("/", verify);
+app.post("/", receive);
+
+// Export serverless handler for Vercel
 export default serverless(app);
 
-// 👇 For local development, start the server
-// Check if we're not in a serverless environment (Vercel sets VERCEL env var)
+// Optional local server
 if (!process.env.VERCEL) {
 	const PORT = process.env.PORT || 3000;
 	app.listen(PORT, () => {
