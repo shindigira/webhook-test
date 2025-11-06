@@ -1,11 +1,21 @@
 import dotenv from "dotenv";
 import express from "express";
+import { dirname, join } from "path";
 import serverless from "serverless-http";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+
+// Serve static files from public directory (for local development)
+// Vercel automatically serves public/ directory in production
+if (!process.env.VERCEL) {
+	const __filename = fileURLToPath(import.meta.url);
+	const __dirname = dirname(__filename);
+	app.use(express.static(join(__dirname, "../public")));
+}
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "dev-token";
 
@@ -24,16 +34,10 @@ const receive = (req, res) => {
 	res.sendStatus(200);
 };
 
-// Vercel routes /api/webhook to this file, so routes should be relative to root (/)
-app.get("/", verify);
-app.post("/", receive);
+// Register webhook routes
+app.get("/api/webhook", verify);
+app.post("/api/webhook", receive);
 app.get("/api/health", (_req, res) => res.status(200).send("ok"));
-
-// For local development, also add /api/webhook routes
-if (!process.env.VERCEL) {
-	app.get("/api/webhook", verify);
-	app.post("/api/webhook", receive);
-}
 
 // Export serverless handler for Vercel
 const handler = serverless(app);

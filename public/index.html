@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram Webhook Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 1.1em;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      color: #764ba2;
+      margin-bottom: 15px;
+      font-size: 1.5em;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 5px;
+    }
+
+    .endpoint {
+      background: #f5f5f5;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .method {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-right: 10px;
+      font-size: 0.9em;
+    }
+
+    .method.get {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .method.post {
+      background: #2196F3;
+      color: white;
+    }
+
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      color: #e83e8c;
+    }
+
+    ul {
+      margin-left: 20px;
+      margin-top: 10px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+
+    .success-box {
+      background: #e8f5e9;
+      border-left: 4px solid #4CAF50;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+
+    .warning-box {
+      background: #fff3e0;
+      border-left: 4px solid #ff9800;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🔔 Instagram Webhook Test</h1>
+    <p class="subtitle">A serverless webhook endpoint for testing Instagram webhook integrations</p>
+
+    <div class="section">
+      <h2>📋 Overview</h2>
+      <p>
+        This project provides a webhook endpoint for receiving and processing Instagram webhook events.
+        It's built with Express.js and deployed as a serverless function on Vercel.
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>🚀 Endpoints</h2>
+
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <code>/api/webhook</code>
+        <p style="margin-top: 10px;">Webhook verification endpoint for Instagram subscription setup.</p>
+        <p style="margin-top: 8px; color: #666;">
+          <strong>Query Parameters:</strong>
+        </p>
+        <ul>
+          <li><code>hub.mode</code> - Must be "subscribe"</li>
+          <li><code>hub.verify_token</code> - Your verification token</li>
+          <li><code>hub.challenge</code> - Challenge string from Instagram</li>
+        </ul>
+      </div>
+
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <code>/api/webhook</code>
+        <p style="margin-top: 10px;">Receives webhook events from Instagram.</p>
+        <p style="margin-top: 8px; color: #666;">
+          All incoming events are logged to the console.
+        </p>
+      </div>
+
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <code>/api/health</code>
+        <p style="margin-top: 10px;">Health check endpoint. Returns "ok" if the server is running.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>⚙️ Configuration</h2>
+
+      <div class="info-box">
+        <strong>Environment Variables:</strong>
+        <ul style="margin-top: 10px;">
+          <li><code>VERIFY_TOKEN</code> - Token used for webhook verification (defaults to "dev-token" if not set)</li>
+        </ul>
+      </div>
+
+      <div class="warning-box">
+        <strong>⚠️ Important:</strong> Make sure to set your <code>VERIFY_TOKEN</code> environment variable in Vercel to
+        match the token you configure in your Instagram app settings.
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🧪 Testing</h2>
+
+      <h3>1. Verify Webhook (GET)</h3>
+      <p>Test the verification endpoint:</p>
+      <div class="endpoint">
+        <code>GET /api/webhook?hub.mode=subscribe&hub.verify_token=YOUR_TOKEN&hub.challenge=test123</code>
+      </div>
+
+      <h3 style="margin-top: 20px;">2. Send Test Event (POST)</h3>
+      <p>You can test the webhook endpoint with a POST request:</p>
+      <div class="endpoint">
+        <code>POST /api/webhook</code><br>
+        <code>Content-Type: application/json</code><br><br>
+        <code>{ "object": "instagram", "entry": [...] }</code>
+      </div>
+
+      <div class="success-box">
+        <strong>✅ Success Response:</strong> The webhook will return HTTP 200 and log the event data to the console.
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📝 Setup Instructions</h2>
+      <ol style="margin-left: 20px;">
+        <li>Deploy this project to Vercel</li>
+        <li>Set the <code>VERIFY_TOKEN</code> environment variable in Vercel</li>
+        <li>Configure your Instagram app's webhook URL to point to
+          <code>https://your-domain.vercel.app/api/webhook</code></li>
+        <li>Use the same <code>VERIFY_TOKEN</code> in your Instagram app settings</li>
+        <li>Subscribe to the webhook events you want to receive</li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>🛠️ Local Development</h2>
+      <p>To run locally:</p>
+      <div class="endpoint">
+        <code>npm run dev</code>
+      </div>
+      <p style="margin-top: 10px;">
+        The server will start on <code>http://localhost:3000</code>
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>📚 Documentation</h2>
+      <p>
+        For more information about Instagram webhooks, visit the
+        <a href="https://developers.facebook.com/docs/instagram-api/webhooks" target="_blank"
+          style="color: #667eea;">Instagram Webhooks Documentation</a>.
+      </p>
+    </div>
+  </div>
+</body>
+
+</html>
