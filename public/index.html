@@ -122,6 +122,83 @@
       margin: 15px 0;
       border-radius: 4px;
     }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    .status-indicator.online {
+      background: #4CAF50;
+    }
+
+    .status-indicator.offline {
+      background: #f44336;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .status-box {
+      background: #f5f5f5;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .events-container {
+      max-height: 400px;
+      overflow-y: auto;
+      background: #f9f9f9;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+
+    .event-item {
+      background: white;
+      border-left: 3px solid #667eea;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    .event-timestamp {
+      color: #666;
+      font-size: 0.85em;
+      margin-bottom: 8px;
+    }
+
+    .event-data {
+      font-family: 'Courier New', monospace;
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 3px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-size: 0.85em;
+    }
+
+    .no-events {
+      text-align: center;
+      color: #999;
+      padding: 20px;
+      font-style: italic;
+    }
   </style>
 </head>
 
@@ -131,10 +208,31 @@
     <p class="subtitle">A serverless webhook endpoint for testing Instagram webhook integrations</p>
 
     <div class="section">
+      <h2>📊 Status</h2>
+      <div class="status-box">
+        <div>
+          <span class="status-indicator offline" id="healthStatus"></span>
+          <strong>API Health:</strong> <span id="healthText">Checking...</span>
+        </div>
+        <div>
+          <strong>Webhook Events:</strong> <span id="eventCount">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📨 Recent Webhook Events</h2>
+      <div class="events-container" id="eventsContainer">
+        <div class="no-events">No webhook events received yet. Events will appear here when received.</div>
+      </div>
+    </div>
+
+    <div class="section">
       <h2>📋 Overview</h2>
       <p>
         This project provides a webhook endpoint for receiving and processing Instagram webhook events.
-        It's built with Express.js and deployed as a serverless function on Vercel.
+        It's built with Express.js and deployed on Railway. The dashboard below shows real-time status
+        and incoming webhook events.
       </p>
     </div>
 
@@ -182,7 +280,7 @@
       </div>
 
       <div class="warning-box">
-        <strong>⚠️ Important:</strong> Make sure to set your <code>VERIFY_TOKEN</code> environment variable in Vercel to
+        <strong>⚠️ Important:</strong> Make sure to set your <code>VERIFY_TOKEN</code> environment variable in Railway to
         match the token you configure in your Instagram app settings.
       </div>
     </div>
@@ -212,12 +310,13 @@
     <div class="section">
       <h2>📝 Setup Instructions</h2>
       <ol style="margin-left: 20px;">
-        <li>Deploy this project to Vercel</li>
-        <li>Set the <code>VERIFY_TOKEN</code> environment variable in Vercel</li>
+        <li>Deploy this project to Railway</li>
+        <li>Set the <code>VERIFY_TOKEN</code> environment variable in Railway</li>
         <li>Configure your Instagram app's webhook URL to point to
-          <code>https://your-domain.vercel.app/api/webhook</code></li>
+          <code>https://your-domain.railway.app/api/webhook</code></li>
         <li>Use the same <code>VERIFY_TOKEN</code> in your Instagram app settings</li>
         <li>Subscribe to the webhook events you want to receive</li>
+        <li>Monitor incoming events in real-time on this dashboard</li>
       </ol>
     </div>
 
@@ -241,6 +340,91 @@
       </p>
     </div>
   </div>
+
+  <script>
+    let lastEventCount = 0;
+
+    // Check health status
+    async function checkHealth() {
+      try {
+        const response = await fetch('/api/health');
+        const statusIndicator = document.getElementById('healthStatus');
+        const healthText = document.getElementById('healthText');
+        
+        if (response.ok) {
+          statusIndicator.className = 'status-indicator online';
+          healthText.textContent = 'Online';
+          healthText.style.color = '#4CAF50';
+        } else {
+          throw new Error('Health check failed');
+        }
+      } catch (error) {
+        const statusIndicator = document.getElementById('healthStatus');
+        const healthText = document.getElementById('healthText');
+        statusIndicator.className = 'status-indicator offline';
+        healthText.textContent = 'Offline';
+        healthText.style.color = '#f44336';
+      }
+    }
+
+    // Fetch and display webhook events
+    async function fetchEvents() {
+      try {
+        const response = await fetch('/api/events');
+        const data = await response.json();
+        const eventsContainer = document.getElementById('eventsContainer');
+        const eventCount = document.getElementById('eventCount');
+        
+        eventCount.textContent = data.count || 0;
+
+        if (data.events && data.events.length > 0) {
+          // Check if we have new events
+          if (data.count !== lastEventCount) {
+            lastEventCount = data.count;
+            
+            eventsContainer.innerHTML = '';
+            data.events.forEach(event => {
+              const eventDiv = document.createElement('div');
+              eventDiv.className = 'event-item';
+              
+              const timestamp = new Date(event.timestamp).toLocaleString();
+              const eventData = JSON.stringify(event.data, null, 2);
+              
+              eventDiv.innerHTML = `
+                <div class="event-timestamp">📅 ${timestamp}</div>
+                <div class="event-data">${escapeHtml(eventData)}</div>
+              `;
+              
+              eventsContainer.appendChild(eventDiv);
+            });
+          }
+        } else {
+          if (eventsContainer.innerHTML.includes('no-events')) {
+            eventsContainer.innerHTML = '<div class="no-events">No webhook events received yet. Events will appear here when received.</div>';
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      }
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Initial checks
+    checkHealth();
+    fetchEvents();
+
+    // Poll health every 5 seconds
+    setInterval(checkHealth, 5000);
+
+    // Poll events every 2 seconds
+    setInterval(fetchEvents, 2000);
+  </script>
 </body>
 
 </html>
